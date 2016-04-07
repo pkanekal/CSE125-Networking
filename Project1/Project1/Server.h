@@ -11,6 +11,7 @@ class Server
 private:
 	int clientSocket;
 	int listenSocket;
+	std::string port;
 
 	int setupSocket(std::string port);
 	int acceptTCPConnection(int listenSocket);

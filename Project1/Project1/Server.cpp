@@ -1,10 +1,10 @@
-//#define __WINDOWS
-#define __LINUX 
+#define __WINDOWS
+//#define __LINUX 
 
 #ifdef __WINDOWS
-#include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <windows.h>
 #endif
 
 #ifdef __LINUX
@@ -20,16 +20,19 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string>
 #include <stddef.h>
 #include "server.h"
+#include <iostream>
 
 // Need to link with Ws2_32.lib
 #ifdef __WINDOWS
 #pragma comment (lib, "Ws2_32.lib")
 #endif
 // #pragma comment (lib, "Mswsock.lib")
+
 Server::Server(std::string port) {
+	this->port = port;
+	std::cout << "Starting server on port " << port << std::endl;
 	listenSocket = setupSocket(port);
 	
 	if (listenSocket == -1) {
@@ -40,18 +43,19 @@ Server::Server(std::string port) {
 
 Server::~Server() {
 	// shutdown the connection since we're done
+	std::cout << "calling destructor" << std::endl;
 	#ifdef __WINDOWS
-	int iResult = shutdown(clientSocket, SD_SEND);
-	if (iResult == SOCKET_ERROR) {
-		printf("shutdown failed with error: %d\n", WSAGetLastError());
+		int iResult = shutdown(clientSocket, SD_SEND);
+		if (iResult == SOCKET_ERROR) {
+			printf("shutdown failed with error: %d\n", WSAGetLastError());
+			closesocket(clientSocket);
+			WSACleanup();
+			return;
+		}
+
+		// cleanup
 		closesocket(clientSocket);
 		WSACleanup();
-		return;
-	}
-
-	// cleanup
-	closesocket(clientSocket);
-	WSACleanup();
 	#endif
 }
 
@@ -59,26 +63,31 @@ void Server::start() {
 	while (true) {
 		clientSocket = acceptTCPConnection(listenSocket);
 		handleClient(clientSocket);
-		close(clientSocket); // TODO: probably better to not keep opening/closing socket
+		#ifdef __LINUX
+			close(clientSocket);
+		#endif
+			break;
 	}
 }
 
 void Server::handleClient(int clientSocket) {
 		// Receive until the peer shuts down the connection
 	int iResult;
+	std::string data;
 	do {
 		char recvbuf[DEFAULT_BUFLEN];
 		iResult = recv(clientSocket, recvbuf, DEFAULT_BUFLEN, 0);
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);
+			data += recvbuf;
 
 			// Echo the buffer back to the sender
 			int iSendResult = send(clientSocket, recvbuf, iResult, 0);
 			if (iSendResult == SOCKET_ERROR) {
 				#ifdef __WINDOWS
-				printf("send failed with error: %d\n", WSAGetLastError());
-				closesocket(clientSocket);
-				WSACleanup();
+					printf("send failed with error: %d\n", WSAGetLastError());
+					closesocket(clientSocket);
+					WSACleanup();
 				#endif
 				return;
 			}
@@ -88,31 +97,34 @@ void Server::handleClient(int clientSocket) {
 			printf("Connection closing...\n");
 		else  {
 			#ifdef __WINDOWS
-			printf("recv failed with error: %d\n", WSAGetLastError());
-			closesocket(ClientSocket);
-			WSACleanup();
+				printf("recv failed with error: %d\n", WSAGetLastError());
+				closesocket(clientSocket);
+				WSACleanup();
 			#endif
 			return;
 		}
 
 	} while (iResult > 0);
+	std::cout << "Received the following data: " << data << std::endl;
 }
 
 int Server::acceptTCPConnection(int listenSocket) {
 	// Accept a client socket
-	int clientSocket = accept(listenSocket, NULL, NULL);
+	int clientSocket;
+	clientSocket = accept(listenSocket, NULL, NULL);
+
 	if (clientSocket == INVALID_SOCKET) {
 		#ifdef __WINDOWS
-		printf("accept failed with error: %d\n", WSAGetLastError());
-		closesocket(listenSocket);
-		WSACleanup();
+			printf("accept failed with error: %d\n", WSAGetLastError());
+			closesocket(listenSocket);
+			WSACleanup();
 		#endif
 		return -1;
 	}
 
 	// No longer need server socket
 	#ifdef __WINDOWS
-	closesocket(listenSocket);
+		closesocket(listenSocket);
 	#endif
 
 	return clientSocket;
@@ -121,7 +133,7 @@ int Server::acceptTCPConnection(int listenSocket) {
 int Server::setupSocket(std::string port) {
 
 	#ifdef __WINDOWS
-	WSADATA wsaData;
+		WSADATA wsaData;
 	#endif
 
 	int iResult;
@@ -138,7 +150,7 @@ int Server::setupSocket(std::string port) {
 
 	// Initialize Winsock
 	#ifdef __WINDOWS
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	#endif
 
 	if (iResult != 0) {
@@ -146,7 +158,7 @@ int Server::setupSocket(std::string port) {
 		return -1;
 	}
 	#ifdef __WINDOWS
-	ZeroMemory(&hints, sizeof(hints));
+		ZeroMemory(&hints, sizeof(hints));
 	#endif
 
 	hints.ai_family = AF_INET;
@@ -159,7 +171,7 @@ int Server::setupSocket(std::string port) {
 	if (iResult != 0) {
 		printf("getaddrinfo failed with error: %d\n", iResult);
 		#ifdef __WINDOWS
-		WSACleanup();
+			WSACleanup();
 		#endif
 		return -1;
 	}
@@ -168,9 +180,9 @@ int Server::setupSocket(std::string port) {
 	ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 	if (ListenSocket == INVALID_SOCKET) {
 		#ifdef __WINDOWS
-		printf("socket failed with error: %ld\n", WSAGetLastError());
-		freeaddrinfo(result);
-		WSACleanup();
+			printf("socket failed with error: %ld\n", WSAGetLastError());
+			freeaddrinfo(result);
+			WSACleanup();
 		#endif
 		return -1;
 	}
@@ -179,10 +191,10 @@ int Server::setupSocket(std::string port) {
 	iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
 	if (iResult == SOCKET_ERROR) {
 		#ifdef __WINDOWS
-		printf("bind failed with error: %d\n", WSAGetLastError());
-		freeaddrinfo(result);
-		closesocket(ListenSocket);
-		WSACleanup();
+			printf("bind failed with error: %d\n", WSAGetLastError());
+			freeaddrinfo(result);
+			closesocket(ListenSocket);
+			WSACleanup();
 		#endif
 		return -1;
 	}
@@ -192,9 +204,9 @@ int Server::setupSocket(std::string port) {
 	iResult = listen(ListenSocket, SOMAXCONN);
 	if (iResult == SOCKET_ERROR) {
 		#ifdef __WINDOWS
-		printf("listen failed with error: %d\n", WSAGetLastError());
-		closesocket(ListenSocket);
-		WSACleanup();
+			printf("listen failed with error: %d\n", WSAGetLastError());
+			closesocket(ListenSocket);
+			WSACleanup();
 		#endif
 		return -1;
 	}
