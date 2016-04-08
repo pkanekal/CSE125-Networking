@@ -113,7 +113,7 @@ int __cdecl main(int argc, char **argv)
 		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 		if (iResult > 0)
 			printf("Bytes received: %d\n", iResult);
-		else if (iResult == 0)
+		else if (iResult == 0) 
 			printf("Connection closed\n");
 		else
 			printf("recv failed with error: %d\n", WSAGetLastError());

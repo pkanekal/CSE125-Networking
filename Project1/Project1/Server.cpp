@@ -1,5 +1,5 @@
-#define __WINDOWS
-//#define __LINUX 
+//#define __WINDOWS
+#define __LINUX 
 
 #ifdef __WINDOWS
 #include <winsock2.h>
@@ -63,10 +63,8 @@ void Server::start() {
 	while (true) {
 		clientSocket = acceptTCPConnection(listenSocket);
 		handleClient(clientSocket);
-		#ifdef __LINUX
-			close(clientSocket);
-		#endif
-			break;
+
+		//	break;
 	}
 }
 
@@ -76,10 +74,12 @@ void Server::handleClient(int clientSocket) {
 	std::string data;
 	do {
 		char recvbuf[DEFAULT_BUFLEN];
-		iResult = recv(clientSocket, recvbuf, DEFAULT_BUFLEN, 0);
+		iResult = recv(clientSocket, recvbuf, DEFAULT_BUFLEN-1, 0);
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);
+			recvbuf[iResult] = '\0';
 			data += recvbuf;
+			std::cout << "Received the following data: " << data << std::endl;
 
 			// Echo the buffer back to the sender
 			int iSendResult = send(clientSocket, recvbuf, iResult, 0);
@@ -92,6 +92,10 @@ void Server::handleClient(int clientSocket) {
 				return;
 			}
 			printf("Bytes sent: %d\n", iSendResult);
+			#ifdef __LINUX
+				close(clientSocket);
+			#endif
+			return;
 		}
 		else if (iResult == 0)
 			printf("Connection closing...\n");
@@ -105,7 +109,6 @@ void Server::handleClient(int clientSocket) {
 		}
 
 	} while (iResult > 0);
-	std::cout << "Received the following data: " << data << std::endl;
 }
 
 int Server::acceptTCPConnection(int listenSocket) {
