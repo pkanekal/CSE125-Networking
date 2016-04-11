@@ -191,15 +191,17 @@ int Client::SetupTCPConnection(std::string serverIp, std::string port){
 
 int Client::sendMessage(std::string message){
 	int iResult;
-	char * encodedMsg = encodeContentLength(message);
+	std::cout << "encoding content length" << std::endl;
+	char buf[DEFAULT_BUFLEN];
+	int contentLength = encodeContentLength(message, buf, DEFAULT_BUFLEN);
 
 	//Need to Establish Connection
 	if (!ConnectionEstablished){
 		std::cerr << "Send Refused. Please Establish Connection" << std::endl;
 		return 1;
 	}
-	std::cout << "Encoded msg: " << *encodedMsg << std::endl;
-	iResult = send(this->ConnectSocket, encodedMsg, strlen(encodedMsg), 0);
+	std::cout << "Encoded msg: " << buf << std::endl;
+	iResult = send(this->ConnectSocket, buf, contentLength, 0);
 	if (iResult == SOCKET_ERROR) {
 #ifdef __LINUX
 #else
@@ -233,10 +235,10 @@ std::string Client::receiveMessage(){
 	}
 	//TODO: totalrecv was originally a ssize_t which is of type unsigned long, to prevent overflow..
 	int totalrecv = 0;
-	struct timeval tv;
-	tv.tv_sec = 5;
-	tv.tv_usec = 0;
-	setsockopt(ConnectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
+	//struct timeval tv;
+	//tv.tv_sec = 5;
+	//tv.tv_usec = 0;
+	//setsockopt(ConnectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
 	std::string result = "";
 	int contentLength = -1;
 	do {
@@ -274,7 +276,8 @@ std::string Client::receiveMessage(){
 			std::cerr << "recv failed with error: " << WSAGetLastError() << std::endl;
 #endif
 		}
-		if (contentLength == totalrecv) break;
+		std::cout << "totalrecv: " << totalrecv << std::endl;
+		if (contentLength + sizeof(int) == totalrecv) break;
 	} while (iResult > 0);
 
 	//TODO:: IS THIS ACCURATE?

@@ -57,10 +57,10 @@ Server::~Server() {
 }
 
 void Server::start() {
+	clientSocket = acceptTCPConnection(listenSocket);
+
 	while (true) {
-		clientSocket = acceptTCPConnection(listenSocket);
 		handleClient(clientSocket);
-		getchar();
 		//break;
 	}
 }
@@ -76,17 +76,20 @@ void Server::handleClient(int clientSocket) {
 		iResult = recv(clientSocket, recvbuf, DEFAULT_BUFLEN-1, 0);
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);
+			totalBytesRecvd += iResult;
 			recvbuf[iResult] = '\0';
 			if (totalBytesRecvd > sizeof(int) && data == "") {
 				contentLength = decodeContentLength(std::string(recvbuf, sizeof(int)));
 				std::cout << "Content-Length: " << contentLength << std::endl;
 
 			}
-			data += recvbuf;
+			data += recvbuf + 4;
 			std::cout << "Received the following data: " << data << std::endl;
-			std::string encodedMsg = encodeContentLength(data);
+			char encodedMsg[DEFAULT_BUFLEN];
+
+			int contentLength = encodeContentLength(data, encodedMsg, DEFAULT_BUFLEN);
 			// Echo the buffer back to the sender
-			int iSendResult = send(clientSocket, data.c_str(), data.size(), 0);
+			int iSendResult = send(clientSocket, encodedMsg, contentLength, 0);
 			if (iSendResult == SOCKET_ERROR) {
 #ifdef __LINUX
 #else
@@ -102,8 +105,10 @@ void Server::handleClient(int clientSocket) {
 			#endif
 			return;
 		}
-		else if (iResult == 0)
-			printf("Connection closing...\n");
+		else if (iResult == 0) {
+			//printf(".");
+			break;
+		}
 		else  {
 #ifdef __LINUX
 #else

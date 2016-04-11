@@ -27,19 +27,19 @@ int decodeContentLength(std::string message){
 	return ntohl((u_long)messageAsInt);
 }
 
-char * encodeContentLength(std::string message) {
-	char buf[DEFAULT_BUFLEN];
-	memset(buf, 0, sizeof(buf));
+int encodeContentLength(std::string message, char * buffer, int buflen) {
+	memset(buffer, 0, buflen);
 
-	int msgLen = message.size();
-	if (msgLen > DEFAULT_BUFLEN - sizeof(int)) {
+	unsigned int msgLen = message.size();
+	if (msgLen > buflen - sizeof(int)) {
 		printf("Error encoding Message!");
-		return buf;
+		return 0;
 	}
 	int len = htonl(msgLen);
-	
-	memcpy(buf, &len, sizeof(int));
-	memcpy(buf + sizeof(int), message.c_str(), message.size());
-	std::cout << "buf: " << (int) buf << std::endl;
-	return buf;
+	std::cout << "msgLen: " << msgLen << std::endl;
+	memcpy(buffer, &len, sizeof(unsigned int));
+	memcpy(buffer + sizeof(int), message.c_str(), message.size());
+	std::cout << "buf: " << buffer << std::endl;
+	return sizeof(int)+msgLen;
+
 }
