@@ -224,7 +224,7 @@ std::string Client::receiveMessage(){
 	memset(recvbuffer, 0, DEFAULT_BUFLEN);
 
 	//Need to Establish Connection
-	std::cout << "reached " << std::endl;
+	//std::cout << "reached " << std::endl;
 	if (!ConnectionEstablished){
 		std::cerr << "Recv Refused. Please Establish Connection" << std::endl;
 		return std::string();
@@ -258,10 +258,10 @@ std::string Client::receiveMessage(){
 			this->ConnectionEstablished = false;
 			this->ConnectSocket = INVALID_SOCKET;
 			//DO we want to return a blank one or a partial one?
+#ifdef __LINUX
 			if (errno == EWOULDBLOCK) {
 				std::cerr << "errno is " << EWOULDBLOCK << std::endl;
 			}
-#ifdef __LINUX
 #else
 			std::cerr << "recv failed with error: " << WSAGetLastError() << std::endl;
 #endif
