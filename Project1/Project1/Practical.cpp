@@ -16,14 +16,10 @@
 
 //TODO Make Linux compatible?
 int decodeLength(std::string message){
+	int messageAsInt;
 	if (message.size() < 4){
 		return 0;
 	}
-
-	char messageAsInt[5];
-	std::cout << sizeof(int) << std::endl;
-	memcpy_s(messageAsInt, sizeof(int), message.c_str(), sizeof(int));
-	messageAsInt[4] = '\0';
-	std::cout << "decodelength " << messageAsInt << std::endl;
+	memcpy_s((void *) &messageAsInt, sizeof(int), message.c_str(), sizeof(int));
 	return ntohl((u_long)messageAsInt);
 }
