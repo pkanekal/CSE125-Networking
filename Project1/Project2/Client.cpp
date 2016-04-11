@@ -1,12 +1,7 @@
-//#define __WINDOWS
-#define __LINUX 
-
-#ifdef __WINDOWS
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <windows.h>
-#endif
-
+/*
+ * PLEASE #DEFINE __LINUX IN EITHER YOUR COMPILER FLAGS
+ * IF COMPILING ON NON WINDOWS MACHINES USING BSD SOCKETS
+ */
 #ifdef __LINUX
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -15,10 +10,12 @@
 #include <arpa/inet.h>
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
 #endif
-
 #include "Client.h"
-#define WIN32_LEAN_AND_MEAN
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -26,19 +23,34 @@
 
 
 // Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
-#ifdef __WINDOWS
+#ifdef __LINUX
+#else
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
+#define WIN32_LEAN_AND_MEAN
 #endif
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "5000"
 
+/**
+	Default Client Constructor
+
+	@return an Empty Client Object
+**/
 Client::Client() : ConnectionEstablished(false), ConnectSocket(INVALID_SOCKET)
 {
 }
 
+/**
+	Recommended Client Constructor.
+	Sets up the Client object.
+
+	@param std::string ip: string containing the ip. Preferably, in the dotted quads form, e.g. "192.168.0.1"
+	@param std::string port: string containing the port. Preferably, in an integer format, e.g. "42069"
+	@return an Empty Client Object
+**/
 Client::Client(std::string ip, std::string port) {
 	this->ConnectionEstablished = false;
 	this->ConnectSocket = INVALID_SOCKET;
@@ -48,18 +60,25 @@ Client::Client(std::string ip, std::string port) {
 	if (result == -1) return;
 }
 
+/**
+	Client Destructor.
+	Sets up the Client object.
+**/
 Client::~Client()
 {
-	#ifdef __WINDOWS
-		int iResult;
-		iResult = shutdown(ConnectSocket, SD_SEND);
-		if (iResult == SOCKET_ERROR) {
-			std::cerr << "shutdown failed: " << WSAGetLastError() << std::endl;
-		}
-		closesocket(ConnectSocket);
 
-		WSACleanup();
-	#endif
+#ifdef __LINUX
+#else
+	int iResult;
+	iResult = shutdown(ConnectSocket, SD_SEND);
+	if (iResult == SOCKET_ERROR) {
+		std::cerr << "shutdown failed: " << WSAGetLastError() << std::endl;
+	}
+	closesocket(ConnectSocket);
+
+	WSACleanup();
+#endif
+
 	this->ConnectionEstablished = false;
 	this->ConnectSocket = INVALID_SOCKET;
 }
@@ -72,13 +91,17 @@ int Client::CloseConnection(){
 		std::cerr << "Already Closed" << std::endl;
 		return 1;
 	}
-	#ifdef __WINDOWS
-		if (iResult == SOCKET_ERROR) {
-			std::cerr << "shutdown failed: " << WSAGetLastError() << std::endl;
-			closeError = 1;
-		}
-		closesocket(ConnectSocket);
-	#endif
+
+#ifdef __LINUX
+#else
+	iResult = shutdown(ConnectSocket, SD_SEND);
+	if (iResult == SOCKET_ERROR) {
+		std::cerr << "shutdown failed: " << WSAGetLastError() << std::endl;
+		closeError = 1;
+	}
+	closesocket(ConnectSocket);
+#endif
+
 	this->ConnectionEstablished = false;
 	this->ConnectSocket = INVALID_SOCKET;
 	return closeError;
@@ -93,16 +116,17 @@ int Client::SetupTCPConnection(std::string serverIp, std::string port){
 	int iResult;
 
 	// Initialize Winsock
-	#ifdef __WINDOWS
-		WSADATA wsaData;
-		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-		if (iResult != 0) {
-			printf("WSAStartup failed with error: %d\n", iResult);
-			return -1;
-		}
+#if __LINUX
+#else
+	WSADATA wsaData;
+	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0) {
+		printf("WSAStartup failed with error: %d\n", iResult);
+		return -1;
+	}
+	ZeroMemory(&hints, sizeof(hints));
+#endif
 
-		ZeroMemory(&hints, sizeof(hints));
-	#endif
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
@@ -111,9 +135,10 @@ int Client::SetupTCPConnection(std::string serverIp, std::string port){
 	iResult = getaddrinfo(serverIp.c_str(), port.c_str(), &hints, &result);
 	if (iResult != 0) {
 		printf("getaddrinfo failed with error: %d\n", iResult);
-		#ifdef __WINDOWS
-			WSACleanup();
-		#endif
+#ifdef __LINUX
+#else
+		WSACleanup();
+#endif
 		return -1;
 	}
 
@@ -124,19 +149,21 @@ int Client::SetupTCPConnection(std::string serverIp, std::string port){
 		ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
 			ptr->ai_protocol);
 		if (ConnectSocket == INVALID_SOCKET) {
-			#ifdef __WINDOWS
-				printf("socket failed with error: %ld\n", WSAGetLastError());
-				WSACleanup();
-			#endif
+#ifdef __LINUX
+#else
+			printf("socket failed with error: %ld\n", WSAGetLastError());
+			WSACleanup();
+#endif
 			return -1;
 		}
 
 		// Connect to server.
 		iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
 		if (iResult == SOCKET_ERROR) {
-			#ifdef __WINDOWS
-				closesocket(ConnectSocket);
-			#endif
+#ifdef __LINUX
+#else
+			closesocket(ConnectSocket);
+#endif
 			ConnectSocket = INVALID_SOCKET;
 			continue;
 		}
@@ -145,9 +172,10 @@ int Client::SetupTCPConnection(std::string serverIp, std::string port){
 	freeaddrinfo(result);
 	if (ConnectSocket == INVALID_SOCKET) {
 		printf("Unable to connect to server!\n");
-		#ifdef __WINDOWS
-			WSACleanup();
-		#endif
+#ifdef __LINUX
+#else
+		WSACleanup();
+#endif
 		return -1;
 	}
 
@@ -171,11 +199,12 @@ int Client::sendMessage(std::string message){
 
 	iResult = send(this->ConnectSocket, message.c_str(), message.size(), 0);
 	if (iResult == SOCKET_ERROR) {
-		#ifdef __WINDOWS
-			std::cerr << "Send Failed with error: " << WSAGetLastError() << std::endl;
-			closesocket(ConnectSocket);
-			WSACleanup();
-		#endif
+#ifdef __LINUX
+#else
+		std::cerr << "Send Failed with error: " << WSAGetLastError() << std::endl;
+		closesocket(ConnectSocket);
+		WSACleanup();
+#endif
 		this->ConnectionEstablished = false;
 		this->ConnectSocket = INVALID_SOCKET;
 		return 1;
@@ -200,7 +229,8 @@ std::string Client::receiveMessage(){
 		std::cerr << "Recv Refused. Please Establish Connection" << std::endl;
 		return std::string();
 	}
-	ssize_t totalrecv = 0;
+	//TODO: totalrecv was originally a ssize_t which is of type unsigned long, to prevent overflow..
+	int totalrecv = 0;
 	struct timeval tv;
 	tv.tv_sec = 5;
 	tv.tv_usec = 0;
@@ -231,9 +261,10 @@ std::string Client::receiveMessage(){
 			if (errno == EWOULDBLOCK) {
 				std::cerr << "errno is " << EWOULDBLOCK << std::endl;
 			}
-			#ifdef __WINDOWS
-				std::cerr << "recv failed with error: " << WSAGetLastError() << std::endl;
-			#endif
+#ifdef __LINUX
+#else
+			std::cerr << "recv failed with error: " << WSAGetLastError() << std::endl;
+#endif
 		}
 	} while (iResult > 0);
 

@@ -12,7 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp" />
-    <ClCompile Include="test.cpp" />
+    <ClCompile Include="testServer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Server.h" />

@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="testClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
