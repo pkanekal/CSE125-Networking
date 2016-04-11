@@ -3,16 +3,22 @@
 
 int main() {
 	Client* c = new Client("127.0.0.1", "5000");
-	//getchar();
-	c->sendMessage("sd");
+
+	c->sendMessage("string1");
 	c->GetStatus(std::string("After SendMessage"));
 
-	//getchar();
 	std::string response = c->receiveMessage();
 	std::cout << "Received a response!" << std::endl;
 	std::cout << response << std::endl;
 	c->GetStatus(std::string("After Response"));
+
+	c->sendMessage("string2");
+	response = c->receiveMessage();
+	std::cout << "Received a response!" << std::endl;
+	std::cout << response << std::endl;
+
 	delete c;
+
 	getchar();
 	return 1;
 }

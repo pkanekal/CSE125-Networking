@@ -14,12 +14,32 @@
 #endif
 #include <iostream>
 
-//TODO Make Linux compatible?
-int decodeLength(std::string message){
+
+#define DEFAULT_BUFLEN 512
+
+
+int decodeContentLength(std::string message){
 	int messageAsInt;
 	if (message.size() < 4){
 		return 0;
 	}
 	memcpy_s((void *) &messageAsInt, sizeof(int), message.c_str(), sizeof(int));
 	return ntohl((u_long)messageAsInt);
+}
+
+char * encodeContentLength(std::string message) {
+	char buf[DEFAULT_BUFLEN];
+	memset(buf, 0, sizeof(buf));
+
+	int msgLen = message.size();
+	if (msgLen > DEFAULT_BUFLEN - sizeof(int)) {
+		printf("Error encoding Message!");
+		return buf;
+	}
+	int len = htonl(msgLen);
+	
+	memcpy(buf, &len, sizeof(int));
+	memcpy(buf + sizeof(int), message.c_str(), message.size());
+	std::cout << "buf: " << (int) buf << std::endl;
+	return buf;
 }

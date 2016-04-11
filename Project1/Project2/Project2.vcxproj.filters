@@ -21,9 +21,15 @@
     <ClCompile Include="testClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Project1\Practical.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Project1\Practical.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

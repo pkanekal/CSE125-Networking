@@ -16,6 +16,7 @@
 #include <windows.h>
 #endif
 #include "Client.h"
+#include "Practical.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -190,14 +191,15 @@ int Client::SetupTCPConnection(std::string serverIp, std::string port){
 
 int Client::sendMessage(std::string message){
 	int iResult;
+	char * encodedMsg = encodeContentLength(message);
 
 	//Need to Establish Connection
 	if (!ConnectionEstablished){
 		std::cerr << "Send Refused. Please Establish Connection" << std::endl;
 		return 1;
 	}
-
-	iResult = send(this->ConnectSocket, message.c_str(), message.size(), 0);
+	std::cout << "Encoded msg: " << *encodedMsg << std::endl;
+	iResult = send(this->ConnectSocket, encodedMsg, strlen(encodedMsg), 0);
 	if (iResult == SOCKET_ERROR) {
 #ifdef __LINUX
 #else
@@ -236,7 +238,7 @@ std::string Client::receiveMessage(){
 	tv.tv_usec = 0;
 	setsockopt(ConnectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
 	std::string result = "";
-
+	int contentLength = -1;
 	do {
 		if (totalrecv > buflen){
 			std::cerr << "Buffer Overflow!!!!!" << std::endl;
@@ -248,6 +250,12 @@ std::string Client::receiveMessage(){
 		if (iResult > 0){
 			totalrecv += iResult;
 			recvbuffer[iResult] = '\0';
+
+			if (totalrecv > sizeof(int) && result == "") { // Recieved content length of data
+
+				contentLength = decodeContentLength(std::string(recvbuffer, sizeof(int)));
+				std::cout << "Content-Length: " << contentLength << std::endl;
+			} 
 			result += recvbuffer;
 		}
 		else if (iResult == 0){
@@ -266,6 +274,7 @@ std::string Client::receiveMessage(){
 			std::cerr << "recv failed with error: " << WSAGetLastError() << std::endl;
 #endif
 		}
+		if (contentLength == totalrecv) break;
 	} while (iResult > 0);
 
 	//TODO:: IS THIS ACCURATE?
@@ -279,4 +288,6 @@ void Client::GetStatus(std::string header){
 	std::cout << "Connect Socket is " << this->ConnectSocket << std::endl;
 	std::cout << std::endl;
 }
+
+
 

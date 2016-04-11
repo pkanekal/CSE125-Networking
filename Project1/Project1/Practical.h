@@ -1,4 +1,6 @@
 #pragma once
 #include <string>
 
-int decodeLength(std::string message);
+int decodeContentLength(std::string message);
+
+char * encodeContentLength(std::string message);

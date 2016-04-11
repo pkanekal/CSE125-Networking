@@ -11,10 +11,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Project1\Practical.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="testClient.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Project1\Practical.h" />
     <ClInclude Include="Client.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -51,6 +53,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>H:\CSE125Projects\CSE125Network\Project1\Project1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

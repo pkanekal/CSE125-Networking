@@ -12,6 +12,7 @@
 #include <windows.h>
 #endif
 
+#include "Practical.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -67,18 +68,25 @@ void Server::start() {
 void Server::handleClient(int clientSocket) {
 		// Receive until the peer shuts down the connection
 	int iResult;
-	std::string data;
+	std::string data = "";
+	int totalBytesRecvd = 0;
+	int contentLength = -1;
 	do {
 		char recvbuf[DEFAULT_BUFLEN];
 		iResult = recv(clientSocket, recvbuf, DEFAULT_BUFLEN-1, 0);
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);
 			recvbuf[iResult] = '\0';
+			if (totalBytesRecvd > sizeof(int) && data == "") {
+				contentLength = decodeContentLength(std::string(recvbuf, sizeof(int)));
+				std::cout << "Content-Length: " << contentLength << std::endl;
+
+			}
 			data += recvbuf;
 			std::cout << "Received the following data: " << data << std::endl;
-
+			std::string encodedMsg = encodeContentLength(data);
 			// Echo the buffer back to the sender
-			int iSendResult = send(clientSocket, recvbuf, iResult, 0);
+			int iSendResult = send(clientSocket, data.c_str(), data.size(), 0);
 			if (iSendResult == SOCKET_ERROR) {
 #ifdef __LINUX
 #else
@@ -105,6 +113,7 @@ void Server::handleClient(int clientSocket) {
 #endif
 			return;
 		}
+		if (contentLength == totalBytesRecvd) break;
 
 	} while (iResult > 0);
 }

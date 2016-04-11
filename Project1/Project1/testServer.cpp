@@ -4,7 +4,7 @@
 #include <string>
 
 int main() {
-	std::cout << decodeLength(std::string("1111")) << std::endl;
-	getchar();
+	Server s("5000");
+	s.start();
 	return 0;
 }
