@@ -271,3 +271,11 @@ std::string Client::receiveMessage(){
 	//TODO:: IS THIS ACCURATE?
 	return result;
 }
+
+void Client::GetStatus(std::string header){
+	std::cout << header;
+	std::cout << "Ip and Port are " << this->serverIp << ":" << this->port << std::endl;
+	std::cout << "Is the connection to the port established? " << this->ConnectionEstablished << std::endl;
+	std::cout << "Connect Socket is " << this->ConnectSocket << std::endl;
+	std::cout << std::endl;
+}

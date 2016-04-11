@@ -59,8 +59,8 @@ void Server::start() {
 	while (true) {
 		clientSocket = acceptTCPConnection(listenSocket);
 		handleClient(clientSocket);
-
-		//	break;
+		getchar();
+		//break;
 	}
 }
 

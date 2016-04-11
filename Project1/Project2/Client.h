@@ -26,6 +26,9 @@ public:
 	//Manual Shutdown
 	int CloseConnection();
 
+	//Status
+	void GetStatus(std::string header = std::string());
+
 	~Client();
 };
 
