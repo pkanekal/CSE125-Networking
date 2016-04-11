@@ -17,6 +17,7 @@ public:
 	//Establishes a Connection based on the ip and port
 	//Returns 1 if failure
 
+	char  decodeMessage(std::string message);
 	//Requirements, need connection to be established... What should the data type be TODO:
 	int sendMessage(std::string message);
 

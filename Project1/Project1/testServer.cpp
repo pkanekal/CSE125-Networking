@@ -1,7 +1,10 @@
 #include "Server.h"
+#include "Practical.h"
+#include <iostream>
+#include <string>
 
 int main() {
-	Server s("5000");
-	s.start();
-	return 1;
+	std::cout << decodeLength(std::string("1111")) << std::endl;
+	getchar();
+	return 0;
 }

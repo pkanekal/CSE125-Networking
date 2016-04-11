@@ -279,3 +279,4 @@ void Client::GetStatus(std::string header){
 	std::cout << "Connect Socket is " << this->ConnectSocket << std::endl;
 	std::cout << std::endl;
 }
+

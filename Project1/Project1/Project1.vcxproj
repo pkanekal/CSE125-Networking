@@ -12,9 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="Practical.cpp" />
     <ClCompile Include="testServer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Practical.h" />
     <ClInclude Include="Server.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

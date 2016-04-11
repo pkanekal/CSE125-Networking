@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
-#include "server.h"
+#include "Server.h"
 #include <iostream>
 
 // Need to link with Ws2_32.lib
