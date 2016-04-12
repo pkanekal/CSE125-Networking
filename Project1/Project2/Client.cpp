@@ -228,7 +228,7 @@ std::string Client::receiveMessage(){
 	memset(recvbuffer, 0, DEFAULT_BUFLEN);
 
 	//Need to Establish Connection
-	//std::cout << "reached " << std::endl;
+	std::cout << "reached " << ConnectionEstablished << std::endl;
 	if (!ConnectionEstablished){
 		std::cerr << "Recv Refused. Please Establish Connection" << std::endl;
 		return std::string();
