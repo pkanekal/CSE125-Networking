@@ -1,5 +1,5 @@
 #include "ServerNetwork.h"
-#include "Practical.h"
+#include "NetworkUtility.h"
 #include <iostream>
 #include <string>
 
